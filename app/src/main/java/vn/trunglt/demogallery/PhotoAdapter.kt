@@ -15,11 +15,6 @@ import vn.trunglt.demogallery.databinding.ItemPhotoBinding
 class PhotoAdapter : RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
     val mList = mutableListOf<Photo>()
 
-    override fun onViewAttachedToWindow(holder: PhotoViewHolder) {
-        super.onViewAttachedToWindow(holder)
-        holder.binding.root.setImageDrawable(null)
-    }
-
     override fun onViewDetachedFromWindow(holder: PhotoViewHolder) {
         super.onViewDetachedFromWindow(holder)
         holder.runnable.shutdown()
@@ -53,6 +48,7 @@ class PhotoAdapter : RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
         var runnable = MyRunnable {}
         fun bind() {
             val photo = mList[adapterPosition]
+            binding.root.tag = photo.path
             runnable = MyRunnable {
                 val desiredHeight = (200 * itemView.context.resources.displayMetrics.density * 2).toInt()
                 val resizedBitmap = ImageUtils.decodeSampledBitmap(itemView.context, photo.path, desiredHeight)

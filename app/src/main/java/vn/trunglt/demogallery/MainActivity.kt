@@ -13,6 +13,9 @@ import vn.trunglt.demogallery.databinding.ActivityMainBinding
 import java.util.concurrent.ThreadPoolExecutor
 
 class MainActivity : AppCompatActivity() {
+    companion object {
+        const val PAGE_LIMIT = 18
+    }
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     private val photoAdapter by lazy { PhotoAdapter() }
     private var page = 0
@@ -25,7 +28,7 @@ class MainActivity : AppCompatActivity() {
                 if (dy > 0 && !isLoading) {
                     Executors.io.execute {
                         isLoading = true
-                        val photos = findPhotos(this@MainActivity, "", page, 18)
+                        val photos = findPhotos(this@MainActivity, "", page, PAGE_LIMIT)
                         Executors.main.post {
                             photoAdapter.addData(photos)
                             isLoading = false
@@ -44,12 +47,17 @@ class MainActivity : AppCompatActivity() {
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
             android.Manifest.permission.READ_MEDIA_IMAGES
         ), 0)
-        photoAdapter.addData(findPhotos(this@MainActivity, "", page, 18))
+        photoAdapter.addData(findPhotos(this@MainActivity, "", page, PAGE_LIMIT))
     }
 
     private fun initListener() {
         binding.apply {
             rcv.addOnScrollListener(onScrollListener)
+            rcv.setHasFixedSize(true)
+            rcv.setItemViewCacheSize(40)
+            rcv.setRecycledViewPool(RecyclerView.RecycledViewPool().apply {
+                setMaxRecycledViews(0, 40)
+            })
         }
     }
 
