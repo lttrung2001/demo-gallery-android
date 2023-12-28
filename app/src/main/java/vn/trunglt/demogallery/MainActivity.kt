@@ -61,6 +61,10 @@ class MainActivity : AppCompatActivity() {
         binding.rcv.apply {
             adapter = photoAdapter
             setHasFixedSize(true)
+            setItemViewCacheSize(PAGE_LIMIT * 2)
+            setRecycledViewPool(RecyclerView.RecycledViewPool().apply {
+                setMaxRecycledViews(0, PAGE_LIMIT * 2)
+            })
         }
     }
 }
