@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
+                println("COUNT: ${binding.rcv.recycledViewPool.getRecycledViewCount(0)}")
             }
         }
     }
@@ -53,18 +54,13 @@ class MainActivity : AppCompatActivity() {
     private fun initListener() {
         binding.apply {
             rcv.addOnScrollListener(onScrollListener)
-            rcv.setHasFixedSize(true)
-            rcv.setItemViewCacheSize(40)
-            rcv.setRecycledViewPool(RecyclerView.RecycledViewPool().apply {
-                setMaxRecycledViews(0, 40)
-            })
         }
     }
 
     private fun initView() {
         binding.rcv.apply {
-            setHasFixedSize(true)
             adapter = photoAdapter
+            setHasFixedSize(true)
         }
     }
 }
