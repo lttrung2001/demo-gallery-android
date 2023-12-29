@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity() {
                         Executors.main.post {
                             photoAdapter.addData(photos)
                             isLoading = false
+                            page++
                         }
                     }
                 }

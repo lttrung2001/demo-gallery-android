@@ -13,17 +13,21 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.bumptech.glide.Glide
 import vn.trunglt.demogallery.databinding.ItemPhotoBinding
 
 class PhotoAdapter(private val context: Context) :
     RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
     val mList = mutableListOf<Photo>()
-    private val cache = LruCache<String, Bitmap>(100)
+    private val cache = LruCache<String, Bitmap>(512)
 
     override fun onViewDetachedFromWindow(holder: PhotoViewHolder) {
         super.onViewDetachedFromWindow(holder)
         holder.runnable.shutdown()
+    }
+
+    override fun onViewRecycled(holder: PhotoViewHolder) {
+        super.onViewRecycled(holder)
+        holder.binding.root.setImageDrawable(null)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PhotoViewHolder {
@@ -60,18 +64,24 @@ class PhotoAdapter(private val context: Context) :
 
         private fun loadImage() {
             val photo = mList[adapterPosition]
+            binding.root.tag = photo.path
             runnable = MyRunnable {
                 println("CURRENT CACHE SIZE: ${cache.size()}")
                 val resizedBitmap = binding.root.let {
-                    val bitmap = BitmapFactory.decodeFile(photo.path)
-                    cache[photo.path] ?: Bitmap.createScaledBitmap(bitmap, it.width, it.height, false).also { b ->
+                    cache[photo.path] ?: Bitmap.createScaledBitmap(
+                        BitmapFactory.decodeFile(
+                            photo.path,
+                            BitmapFactory.Options().apply {
+                                outHeight = it.height
+                                outWidth = it.width
+                            }), it.width, it.height, false
+                    ).also { b ->
                         cache.put(photo.path, b)
                     }
                 }
                 runnable = MyRunnable {
                     binding.root.apply {
-                        tag = photo.path
-                        setImageBitmap(resizedBitmap)
+                        if (tag == photo.path) setImageBitmap(resizedBitmap)
                     }
                 }
                 Executors.main.post(runnable)
