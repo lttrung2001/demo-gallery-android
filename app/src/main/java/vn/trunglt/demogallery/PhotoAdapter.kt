@@ -2,18 +2,24 @@ package vn.trunglt.demogallery
 
 import android.content.ContentResolver
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.Animatable
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.bumptech.glide.Glide
 import vn.trunglt.demogallery.databinding.ItemPhotoBinding
 
-class PhotoAdapter : RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
+class PhotoAdapter(private val context: Context) :
+    RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
     val mList = mutableListOf<Photo>()
+    private val cache = LruCache<String, Bitmap>(100)
 
     override fun onViewDetachedFromWindow(holder: PhotoViewHolder) {
         super.onViewDetachedFromWindow(holder)
@@ -47,13 +53,26 @@ class PhotoAdapter : RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
     inner class PhotoViewHolder(val binding: ItemPhotoBinding) : ViewHolder(binding.root) {
         var runnable = MyRunnable {}
         fun bind() {
+//            val photo = mList[adapterPosition]
+//            Glide.with(binding.root).load(photo.path).into(binding.root)
+            loadImage()
+        }
+
+        private fun loadImage() {
             val photo = mList[adapterPosition]
-            binding.root.tag = photo.path
             runnable = MyRunnable {
-                val desiredHeight = (200 * itemView.context.resources.displayMetrics.density * 2).toInt()
-                val resizedBitmap = ImageUtils.decodeSampledBitmap(itemView.context, photo.path, desiredHeight)
+                println("CURRENT CACHE SIZE: ${cache.size()}")
+                val resizedBitmap = binding.root.let {
+                    val bitmap = BitmapFactory.decodeFile(photo.path)
+                    cache[photo.path] ?: Bitmap.createScaledBitmap(bitmap, it.width, it.height, false).also { b ->
+                        cache.put(photo.path, b)
+                    }
+                }
                 runnable = MyRunnable {
-                    binding.root.setImageBitmap(resizedBitmap)
+                    binding.root.apply {
+                        tag = photo.path
+                        setImageBitmap(resizedBitmap)
+                    }
                 }
                 Executors.main.post(runnable)
             }
@@ -113,4 +132,18 @@ fun findPhotos(
     }
     imageCursor?.close()
     return photoList
+}
+
+class A(onStart: () -> Unit) : Animatable {
+    override fun start() {
+
+    }
+
+    override fun stop() {
+
+    }
+
+    override fun isRunning(): Boolean {
+        return true
+    }
 }

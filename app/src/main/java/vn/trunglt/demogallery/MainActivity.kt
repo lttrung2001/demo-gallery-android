@@ -1,26 +1,22 @@
 package vn.trunglt.demogallery
 
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import androidx.lifecycle.lifecycleScope
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.*
+import kotlinx.coroutines.newFixedThreadPoolContext
 import vn.trunglt.demogallery.databinding.ActivityMainBinding
-import java.util.concurrent.ThreadPoolExecutor
 
 class MainActivity : AppCompatActivity() {
     companion object {
-        const val PAGE_LIMIT = 18
+        const val PAGE_LIMIT = 12
     }
+
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
-    private val photoAdapter by lazy { PhotoAdapter() }
+    private val photoAdapter by lazy { PhotoAdapter(this) }
     private var page = 0
     private var isLoading = false
-    private var cache = hashMapOf<String, Bitmap>()
     private val onScrollListener by lazy {
         object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -35,19 +31,21 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
-                println("COUNT: ${binding.rcv.recycledViewPool.getRecycledViewCount(0)}")
             }
         }
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
         initView()
         initListener()
-        requestPermissions(arrayOf(
-            android.Manifest.permission.READ_EXTERNAL_STORAGE,
-            android.Manifest.permission.READ_MEDIA_IMAGES
-        ), 0)
+        requestPermissions(
+            arrayOf(
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.READ_MEDIA_IMAGES
+            ), 0
+        )
         photoAdapter.addData(findPhotos(this@MainActivity, "", page, PAGE_LIMIT))
     }
 
@@ -61,15 +59,15 @@ class MainActivity : AppCompatActivity() {
         binding.rcv.apply {
             adapter = photoAdapter
             setHasFixedSize(true)
-            setItemViewCacheSize(PAGE_LIMIT * 2)
-            setRecycledViewPool(RecyclerView.RecycledViewPool().apply {
-                setMaxRecycledViews(0, PAGE_LIMIT * 2)
-            })
+//            setItemViewCacheSize(PAGE_LIMIT * 2)
+//            setRecycledViewPool(RecyclerView.RecycledViewPool().apply {
+//                setMaxRecycledViews(0, PAGE_LIMIT * 2)
+//            })
         }
     }
 }
 
 object Executors {
-    val io by lazy { newFixedThreadPoolContext(4, "IO").executor }
+    val io by lazy { newFixedThreadPoolContext(3, "IO").executor }
     val main by lazy { Handler(Looper.getMainLooper()) }
 }
