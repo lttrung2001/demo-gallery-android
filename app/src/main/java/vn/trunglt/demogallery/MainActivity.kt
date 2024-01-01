@@ -14,7 +14,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
-    private val photoAdapter by lazy { PhotoAdapter(this) }
+    private val photoAdapter by lazy { PhotoAdapter() }
     private var page = 0
     private var isLoading = false
     private val onScrollListener by lazy {
@@ -60,15 +60,17 @@ class MainActivity : AppCompatActivity() {
         binding.rcv.apply {
             adapter = photoAdapter
             setHasFixedSize(true)
-//            setItemViewCacheSize(PAGE_LIMIT * 2)
-//            setRecycledViewPool(RecyclerView.RecycledViewPool().apply {
-//                setMaxRecycledViews(0, PAGE_LIMIT * 2)
-//            })
         }
     }
 }
 
 object Executors {
-    val io by lazy { newFixedThreadPoolContext(3, "IO").executor }
+    val io by lazy {
+        println(Thread.activeCount())
+        newFixedThreadPoolContext(Thread.activeCount() / 2, "IO").executor
+    }
     val main by lazy { Handler(Looper.getMainLooper()) }
+    private val pools by lazy {
+
+    }
 }

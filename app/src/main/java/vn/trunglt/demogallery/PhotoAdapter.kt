@@ -4,18 +4,20 @@ import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.drawable.Animatable
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.graphics.drawable.toDrawable
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import vn.trunglt.demogallery.databinding.ItemPhotoBinding
 
-class PhotoAdapter(private val context: Context) :
+class PhotoAdapter() :
     RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
     val mList = mutableListOf<Photo>()
     private val cache = LruCache<String, Bitmap>(512)
@@ -57,23 +59,29 @@ class PhotoAdapter(private val context: Context) :
     inner class PhotoViewHolder(val binding: ItemPhotoBinding) : ViewHolder(binding.root) {
         var runnable = MyRunnable {}
         fun bind() {
-//            val photo = mList[adapterPosition]
-//            Glide.with(binding.root).load(photo.path).into(binding.root)
-            loadImage()
+            val photo = mList[adapterPosition]
+            Glide.with(binding.root)
+                .load(photo.path)
+                .into(binding.root)
+//            loadImage()
         }
 
         private fun loadImage() {
             val photo = mList[adapterPosition]
             binding.root.tag = photo.path
+
+
             runnable = MyRunnable {
-                println("CURRENT CACHE SIZE: ${cache.size()}")
                 val resizedBitmap = binding.root.let {
-                    cache[photo.path] ?: Bitmap.createScaledBitmap(
+                    cache[photo.path] ?:
+                    Bitmap.createScaledBitmap(
                         BitmapFactory.decodeFile(
                             photo.path,
                             BitmapFactory.Options().apply {
-                                outHeight = it.height
-                                outWidth = it.width
+                                this.inDensity = it.resources.displayMetrics.densityDpi
+                                this.inTargetDensity = it.resources.displayMetrics.densityDpi
+                                this.inScaled = true
+                                this.inBitmap = cache[photo.path]
                             }), it.width, it.height, false
                     ).also { b ->
                         cache.put(photo.path, b)
@@ -81,7 +89,9 @@ class PhotoAdapter(private val context: Context) :
                 }
                 runnable = MyRunnable {
                     binding.root.apply {
-                        if (tag == photo.path) setImageBitmap(resizedBitmap)
+                        if (tag == photo.path) {
+                            setImageDrawable(resizedBitmap.toDrawable(resources))
+                        }
                     }
                 }
                 Executors.main.post(runnable)
@@ -142,18 +152,4 @@ fun findPhotos(
     }
     imageCursor?.close()
     return photoList
-}
-
-class A(onStart: () -> Unit) : Animatable {
-    override fun start() {
-
-    }
-
-    override fun stop() {
-
-    }
-
-    override fun isRunning(): Boolean {
-        return true
-    }
 }
