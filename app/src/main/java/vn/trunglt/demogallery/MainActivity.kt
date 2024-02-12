@@ -70,7 +70,4 @@ object Executors {
         newFixedThreadPoolContext(Thread.activeCount() / 2, "IO").executor
     }
     val main by lazy { Handler(Looper.getMainLooper()) }
-    private val pools by lazy {
-
-    }
 }

@@ -2,35 +2,20 @@ package vn.trunglt.demogallery
 
 import android.content.ContentResolver
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.graphics.drawable.toDrawable
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import vn.trunglt.demogallery.databinding.ItemPhotoBinding
 
-class PhotoAdapter() :
+class PhotoAdapter :
     RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
     val mList = mutableListOf<Photo>()
-    private val cache = LruCache<String, Bitmap>(512)
-
-    override fun onViewDetachedFromWindow(holder: PhotoViewHolder) {
-        super.onViewDetachedFromWindow(holder)
-        holder.runnable.shutdown()
-    }
-
-    override fun onViewRecycled(holder: PhotoViewHolder) {
-        super.onViewRecycled(holder)
-        holder.binding.root.setImageDrawable(null)
-    }
+    val imageLoader = ImageLoader()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PhotoViewHolder {
         return PhotoViewHolder(
@@ -56,47 +41,13 @@ class PhotoAdapter() :
         holder.bind()
     }
 
-    inner class PhotoViewHolder(val binding: ItemPhotoBinding) : ViewHolder(binding.root) {
-        var runnable = MyRunnable {}
+    inner class PhotoViewHolder(private val binding: ItemPhotoBinding) : ViewHolder(binding.root) {
         fun bind() {
             val photo = mList[adapterPosition]
-            Glide.with(binding.root)
-                .load(photo.path)
-                .into(binding.root)
-//            loadImage()
-        }
-
-        private fun loadImage() {
-            val photo = mList[adapterPosition]
-            binding.root.tag = photo.path
-
-
-            runnable = MyRunnable {
-                val resizedBitmap = binding.root.let {
-                    cache[photo.path] ?:
-                    Bitmap.createScaledBitmap(
-                        BitmapFactory.decodeFile(
-                            photo.path,
-                            BitmapFactory.Options().apply {
-                                this.inDensity = it.resources.displayMetrics.densityDpi
-                                this.inTargetDensity = it.resources.displayMetrics.densityDpi
-                                this.inScaled = true
-                                this.inBitmap = cache[photo.path]
-                            }), it.width, it.height, false
-                    ).also { b ->
-                        cache.put(photo.path, b)
-                    }
-                }
-                runnable = MyRunnable {
-                    binding.root.apply {
-                        if (tag == photo.path) {
-                            setImageDrawable(resizedBitmap.toDrawable(resources))
-                        }
-                    }
-                }
-                Executors.main.post(runnable)
-            }
-            Executors.io.execute(runnable)
+            imageLoader.loadImageInto(photo.path, binding.root)
+//            Glide.with(binding.root)
+//                .load(photo.path)
+//                .into(binding.root)
         }
     }
 }
